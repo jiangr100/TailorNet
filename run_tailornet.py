@@ -73,7 +73,7 @@ def get_sequence_inputs(garment_class, gender):
 
 def run_tailornet():
     gender = 'female'
-    garment_class = 'skirt'
+    garment_class = 'old-t-shirt_female'
     thetas, betas, gammas = get_single_frame_inputs(garment_class, gender)
     # # uncomment the line below to run inference on sequence data
     # thetas, betas, gammas = get_sequence_inputs(garment_class, gender)

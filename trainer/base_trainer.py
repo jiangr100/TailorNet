@@ -16,8 +16,62 @@ from utils.logger import TailorNetLogger
 from utils import sio
 import global_var
 
+import wandb
+
 device = torch.device("cuda:0")
 # device = torch.device("cpu")
+
+
+def load_obj(filename, tex_coords=False, ret_normals=False):
+    vertices = []
+    faces = []
+    uvs = []
+    faces_uv = []
+    fns = []
+
+    with open(filename, 'r') as fp:
+        for line in fp:
+            line_split = line.split()
+
+            if not line_split:
+                continue
+
+            elif tex_coords and line_split[0] == 'vt':
+                uvs.append([line_split[1], line_split[2]])
+
+            elif tex_coords and line_split[0] == 'vn':
+                fns.append([line_split[1], line_split[2], line_split[3]])
+
+            elif line_split[0] == 'v':
+                vertices.append([line_split[1], line_split[2], line_split[3]])
+
+            elif line_split[0] == 'f':
+                vertex_indices = [s.split("/")[0] for s in line_split[1:]]
+                faces.append(vertex_indices)
+
+                if tex_coords:
+                    uv_indices = [s.split("/")[1] for s in line_split[1:]]
+                    faces_uv.append(uv_indices)
+
+    vertices = np.array(vertices, dtype=np.float32)
+    faces = np.array(faces, dtype=np.int32) - 1
+
+    if ret_normals:
+        fns = np.array(fns, dtype=np.float32)
+
+    if tex_coords:
+        uvs = np.array(uvs, dtype=np.float32)
+        faces_uv = np.array(faces_uv, dtype=np.int32) - 1
+
+        if ret_normals:
+            return vertices, faces, uvs, faces_uv, fns
+        else:
+            return vertices, faces, uvs, faces_uv
+
+    if ret_normals:
+        return vertices, faces, fns
+    else:
+        return vertices, faces
 
 
 class Trainer(object):
@@ -68,6 +122,29 @@ class Trainer(object):
         self.model.to(device)
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=params['lr'], weight_decay=params['weight_decay'])
+
+        if params['patch_dir_list'] is not None:
+            patch_dir_list = params['patch_dir_list']
+
+            self.patches_list = []
+            self.patch_menu_list = []
+            for patch_dir in patch_dir_list:
+                _, self.f, self.v_uv, self.f_uv = load_obj('..\\Patch_info\\g_idle_with_uv_mapping.obj', tex_coords=True,
+                                                      ret_normals=False)
+                self.v_uv = torch.from_numpy(self.v_uv).to(device)
+                self.f_uv = torch.from_numpy(self.f_uv).to(device)
+                patches = []
+                with open(patch_dir + '\\patch_menu.pkl', 'rb') as file:
+                    patch_menu = pickle.load(file)
+
+                for patch_id in range(len(os.listdir(patch_dir)) - 2):
+                    with open(patch_dir + '\\patch_%03d' % patch_id, 'rb') as file:
+                        patch = pickle.load(file)
+                    patches.append(patch)
+
+                self.patches_list.append(patches)
+                self.patch_menu_list.append(patch_menu)
+
 
         # continue training from checkpoint if provided
         if params['checkpoint']:
@@ -195,6 +272,8 @@ class Trainer(object):
         print("VALIDATION")
         print("Epoch {}, loss: {:.4f}, dist: {:.4f} mm".format(
             epoch, val_loss.avg, val_dist_avg))
+
+        wandb.log({'val_loss': val_loss.avg, 'val_dist': val_dist_avg})
 
         if val_dist_avg < self.best_error:
             self.best_error = val_dist_avg

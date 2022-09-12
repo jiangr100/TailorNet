@@ -42,7 +42,7 @@ class SMPL4Garment(object):
                 vert_indices = self.class_info[garment_class]['vert_indices']
                 f = self.class_info[garment_class]['f']
                 self.smpl_base.v_personal[vert_indices] = garment_d
-                # garment_m = Mesh(v=self.smpl_base.r[vert_indices], f=f)
+                garment_m = Mesh(v=self.smpl_base.r[vert_indices], f=f)
                 gar_v = self.smpl_base.r[vert_indices]
                 gar_f = f
             else:
@@ -56,12 +56,12 @@ class SMPL4Garment(object):
                 verts = verts + garment_d
                 verts_h = ch.hstack((verts, ch.ones((verts.shape[0], 1))))
                 verts = ch.sum(skirt_V * verts_h.reshape(-1, 1, 4), axis=-1)[:, :3]
-                # garment_m = Mesh(v=verts, f=f)
+                garment_m = Mesh(v=verts, f=f)
         else:
             garment_m = None
         self.smpl_base.v_personal[:] = 0
-        # body_m = Mesh(v=self.smpl_base.r, f=self.smpl_base.f)
-        # return body_m, garment_m
+        body_m = Mesh(v=self.smpl_base.r, f=self.smpl_base.f)
+        return body_m, garment_m
         body_v = self.smpl_base.r
         body_f = self.smpl_base.f
 

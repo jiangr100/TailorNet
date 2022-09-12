@@ -4,6 +4,8 @@ import os
 import torch
 from trainer import base_trainer
 
+import wandb
+
 device = torch.device("cuda:0")
 # device = torch.device("cpu")
 

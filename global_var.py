@@ -14,10 +14,10 @@ SMPL_PATH_FEMALE = 'C:\\Users\\Rui_work\\Documents\\Virtual-Try-on\\code\\datase
 
 
 # Log directory where training logs, checkpoints and visualizations will be stored
-LOG_DIR = '/BS/cpatel/work/data/learn_anim'
+LOG_DIR = './training_log'
 
 # Downloaded TailorNet trained models' path
-MODEL_WEIGHTS_PATH = "/BS/cpatel/work/data/learn_anim"
+MODEL_WEIGHTS_PATH = "/model_weights"
 
 # --------------------------------------------------------------------
 # Variables below hardly need to change
